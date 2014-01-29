@@ -1,0 +1,37 @@
+{
+  "name"            : "eventual-schema",
+  "description"     : "Combine objects into eventual schemas. Supply rules on when to freeze into a generalised schema",
+  "homepage"        : "https://github.com/sebinsua/eventual-schema",
+  "keywords"        : [
+    "schema",
+    "eventual",
+    "schemaless",
+    "automatic",
+    "rule-based",
+    "magic",
+    "time",
+    "freeze",
+    "progressive"
+  ],
+  "author"          : "Seb Insua <me@sebinsua.com>",
+  "repository"      : {
+    "type": "git",
+    "url": "git://github.com/sebinsua/eventual-schema.git"
+  },
+  "main"            : "./index.js",
+  "version"         : "0.0.1",
+  "dependencies"    : {
+  },
+  "devDependencies" : {
+    "mocha": "*",
+    "chai": "*",
+    "jshint": "latest",
+    "docco": "latest"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "scripts": {
+    "test": "make test"
+  }
+}
