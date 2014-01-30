@@ -5,26 +5,34 @@ var should = require('chai').should();
 var EventualSchema = require('../');
 
 /*
-  this.MAX_INTENTION_BODY_PROPERTIES = 100;
-  this.MAX_REACTION_PROPERTIES = 100;
 
-query: {
+1. How to create route schemas.
+   Create rules for query, body and reaction:
+     Make sure each of the rules passed in is generated with the correct options.
+   On executing a route for the first time create a route schema which is just a key-value entry containing this:
+  this._instantiatedDate = new Date();
+  this._instanceCount = 0;
+  and
 
-},
-body: {
-    'deep.property-name-d': 3,
-    'deep.deeper.property-name-e': 77,
-    'deep.deeper.property-name-f': 456
-},
-reaction: {
-    'property-name-g': 101,
-    'deep.deeper.deepest.property-name-h': 34,
-    'property-name-i': 384
-}
-Others might look like this:
-*/
+    {
+        query: new EventualSchema(ruleConfig),
+        body: new EventualSchema(ruleConfig),
+        reaction: new EventualSchema(ruleConfig)
+    }
+2. This RouteSchema thing should have its own add method, it's own rules, etc.
+var hasMaxInstances = function (eventualSchema) {
+  var NUMBER_OF_INSTANCES_BEFORE_FREEZE = 500;    
+};
 
-/*
+var isBeyondMaxNumberOfDates = function (eventualSchema) {
+  var NUMBER_OF_DAYS_BEFORE_FREEZE = 7;
+};
+
+
+There should be a methdo which gets out lists, with something like this:
+
+Object.keys(eventualSchema.get())
+
 This is somewhere else.
 EventualSchema.prototype.save = function () {
     
@@ -48,16 +56,8 @@ var hasMaximumProperties = function (eventualSchema) {
   var MAX_PROPERTIES = 30;
 };
 
-var hasMaxInstances = function (eventualSchema) {
-  var NUMBER_OF_INSTANCES_BEFORE_FREEZE = 500;    
-};
-
 var isAboveMinPropertyCount = function (eventualSchema) {
   var MIN_PROPERTY_QUANTITY = 1;
-};
-
-var isBeyondMaxNumberOfDates = function (eventualSchema) {
-  var NUMBER_OF_DAYS_BEFORE_FREEZE = 7;
 };
 
 describe("EventualSchema", function () {
