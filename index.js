@@ -1,54 +1,60 @@
-var EventualSchema = function () {
-  this.MAX_QUERY_PROPERTIES = 30;
-  this.MAX_INTENTION_BODY_PROPERTIES = 100;
-  this.MAX_REACTION_PROPERTIES = 100;
-  this.NUMBER_OF_REQUESTS_BEFORE_LOCK = 500;
-  this.NUMBER_OF_DAYS_BEFORE_LOCK = 7;
-  this.MIN_PROPERTY_QUANTITY = 1;
+"use strict";
 
-  this.schemaKeys = ['query', 'body', 'reaction'];
+var forEach = require('./lib/utils').forEach;
 
-  this.data = {
-        locked: false,
-        schema: {
-            query: {
-                'property-name-a': 1,
-                'property-name-b': 10,
-                'property-name-c': 78
-            },
-            body: {
-                'deep.property-name-d': 3,
-                'deep.deeper.property-name-e': 77,
-                'deep.deeper.property-name-f': 456
-            },
-            reaction: {
-                'property-name-g': 101,
-                'deep.deeper.deepest.property-name-h': 34,
-                'property-name-i': 384
-            }
-        } 
-    };
+var EventualSchema = function (rules) {
+  this._instantiatedDate = new Date();
+  this._collatedInstances = {};
+  this._instanceCount = 0;
+
+  this._rules = rules || [];
+
+  this._eventualSchema = null;
+  this.frozen = false;
 };
 
-EventualSchema.prototype.save = function () {
-    
-};
+EventualSchema.prototype.initEventualSchema = function (eventualSchema, isFrozen) {
+  if (isFrozen) {
+    this._eventualSchema = eventualSchema || {};
+    this.frozen = isFrozen;
+  }
+}
 
-EventualSchema.prototype.load = function () {
-    
+EventualSchema.prototype._checkIfFrozen = function () {
+    if (this.frozen) {
+        throw new Error("Once frozen EventualSchema#get() is the only callable method.")
+    }
 };
 
 EventualSchema.prototype.get = function (routeName) {
-    var eventualSchemaConfig = this._eventualSchemaConfig,
-        eventualSchema = {};
-    if (eventualSchemaConfig[routeName]) {
-
+    if (!this.frozen) {
+        throw new Error("You cannot get the _eventualSchema until the necessary rules have been passed.");
     }
-    return eventualSchema;
+    return this._eventualSchema;
 }
 
 EventualSchema.prototype.add = function (instance) {
-    
+    this._checkIfFrozen();
+
+    // Place instance inside the data.
 };
 
+EventualSchema.prototype._flattenProperties = function (obj, propertyDelimiter, arrayIdentifier) {
+    // Nested with . and []
+    delimiter = delimiter || '.';
+    arrayIdentifier = arrayIdentifier || '[]';
+};
 
+EventualSchema.prototype._isReadyToFreeze = function () {
+    return false;
+};
+
+EventualSchema.prototype.freeze = function () {
+    this._checkIfFrozen();
+};
+
+EventualSchema.prototype._generateEventualSchema = function (collatedInstances) {
+
+};
+
+exports = module.exports = EventualSchema;
