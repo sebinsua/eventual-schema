@@ -3,6 +3,9 @@
 var forEach = require('./lib/utils').forEach;
 
 var EventualSchema = function (rules) {
+  this._instantiatedDate = new Date();
+  this._instanceCount = 0;  
+
   this._collatedInstances = {};
 
   this._rules = rules || [];

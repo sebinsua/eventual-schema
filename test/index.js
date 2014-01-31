@@ -5,53 +5,82 @@ var should = require('chai').should();
 var EventualSchema = require('../');
 
 /*
+An eventual schema exists for one key-value object.
 
-1. How to create route schemas.
-   Create rules for query, body and reaction:
-     Make sure each of the rules passed in is generated with the correct options.
-   On executing a route for the first time create a route schema which is just a key-value entry containing this:
-  this._instantiatedDate = new Date();
-  this._instanceCount = 0;
-  and
+It does have to recurse when adding. If I can find out a way of stopping this I will, but alas I probably cannot escape it. So I document it.
 
-    {
-        query: new EventualSchema(ruleConfig),
-        body: new EventualSchema(ruleConfig),
-        reaction: new EventualSchema(ruleConfig)
+Look into underscore deep.extend?
+Python object counters?
+JSON property counters?
+
+What format is the data stored as first?
+
+Given three of these: 
+
+{
+    a: {
+        num: 7,
+        arr: []
+    },
+    b: {
+        arr: [
+            {
+                name: 'hello world'
+            }
+        ],
+        value: {
+            type: 'person',
+            name: 'gilly'
+        }
+    },
+    c: {
+        arr: []
     }
-2. This RouteSchema thing should have its own add method, it's own rules, etc.
-var hasMaxInstances = function (eventualSchema) {
-  var NUMBER_OF_INSTANCES_BEFORE_FREEZE = 500;    
-};
-
-var isBeyondMaxNumberOfDates = function (eventualSchema) {
-  var NUMBER_OF_DAYS_BEFORE_FREEZE = 7;
-};
-
-
-There should be a methdo which gets out lists, with something like this:
-
-Object.keys(eventualSchema.get())
-
-This is somewhere else.
-EventualSchema.prototype.save = function () {
-    
-};
-
-var collatedInstances = {
- 'property-name-a': {
-  propertyCount: 1
-},
-'property-name-b': {
-  propertyCount: 10
-},
-'property-name-c': {
-  propertyCount: 78
 }
-};
 
+Create this:
+
+{
+    a: {
+        _propertyCount: 3,
+        num: { _propertyCount: 3 },
+        arr: { _propertyCount: 3 }
+    },
+    b: {
+        _propertyCount: 3,
+        arr: [
+            {
+                name: { _propertyCount: 3 }
+            }
+        ],
+        value: {
+            _propertyCount: 3,
+            type: { _propertyCount: 3 },
+            name: { _propertyCount: 3 }
+        }
+    },
+    c: {
+        _propertyCount: 3,
+        arr: { _propertyCount: 3 }
+    }
+}
+
+This representation is better because even-though I need to recurse to create it, when I try to recurse later on to simplify the structure based on rules I can do so easily. It also allows more information and does not impart a syntax onto the idea of deep property hierarchies and is therefore generalised to more use cases.
+
+We don't create something like this (yet.):
+
+{
+    a.num: { _propertyCount: 3 },
+    a.arr: { _propertyCount: 3 },
+    b.arr[].name: { _propertyCount: 3 },
+    b.arr[].types: { _propertyCount: 3 },
+    b.value.type: { _propertyCount: 3 },
+    b.value.name: { _propertyCount: 3 },
+    c.arr: { _propertyCount: 3 }
+}
 */
 
+// The will be injected in anyways.
 var hasMaximumProperties = function (eventualSchema) {
   var MAX_PROPERTIES = 30;
 };
@@ -60,8 +89,18 @@ var isAboveMinPropertyCount = function (eventualSchema) {
   var MIN_PROPERTY_QUANTITY = 1;
 };
 
+var hasMaxInstances = function (routeSchema) {
+  var NUMBER_OF_INSTANCES_BEFORE_FREEZE = 500;    
+};
+
+var isBeyondMaxNumberOfDates = function (routeSchema) {
+  var NUMBER_OF_DAYS_BEFORE_FREEZE = 7;
+};
+
 describe("EventualSchema", function () {
   // These will get moved elsewhere, and tested elsewhere at some point.
+  // @todo: Test simpler rules, and then test these rules elsewhere.
+  // @todo: However be careful to let the rule execution interface pass in data that allows these.
   var rules = [hasMaximumProperties, hasMaxInstances, isAboveMinPropertyCount, isBeyondMaxNumberOfDates];
 
   describe('#constructor', function () {
