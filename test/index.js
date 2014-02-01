@@ -5,105 +5,7 @@ var should = require('chai').should(),
 
 var EventualSchema = require('../');
 
-/*
-An eventual schema exists for one key-value object.
-
-It does have to recurse when adding. If I can find out a way of stopping this I will, but alas I probably cannot escape it. So I document it.
-
-Look into underscore deep.extend?
-Python object counters?
-JSON property counters?
-
-What format is the data stored as first?
-
-Given three of these: 
-
-{
-    a: {
-        num: 7,
-        arr: []
-    },
-    b: {
-        arr: [
-            {
-                name: 'hello world'
-            }
-        ],
-        value: {
-            type: 'person',
-            name: 'gilly'
-        }
-    },
-    c: {
-        arr: []
-    }
-}
-
-Create this:
-
-{
-    a: {
-        _propertyCount: 3,
-        num: { _propertyCount: 3 },
-        arr: { _propertyCount: 3 }
-    },
-    b: {
-        _propertyCount: 3,
-        arr: [
-            {
-                name: { _propertyCount: 3 }
-            }
-        ],
-        value: {
-            _propertyCount: 3,
-            type: { _propertyCount: 3 },
-            name: { _propertyCount: 3 }
-        }
-    },
-    c: {
-        _propertyCount: 3,
-        arr: { _propertyCount: 3 }
-    }
-}
-
-This representation is better because even-though I need to recurse to create it, when I try to recurse later on to simplify the structure based on rules I can do so easily. It also allows more information and does not impart a syntax onto the idea of deep property hierarchies and is therefore generalised to more use cases.
-
-We don't create something like this (yet.):
-
-{
-    a.num: { _propertyCount: 3 },
-    a.arr: { _propertyCount: 3 },
-    b.arr[].name: { _propertyCount: 3 },
-    b.arr[].types: { _propertyCount: 3 },
-    b.value.type: { _propertyCount: 3 },
-    b.value.name: { _propertyCount: 3 },
-    c.arr: { _propertyCount: 3 }
-}
-*/
-
-// The will be injected in anyways.
-var hasMaximumProperties = function (eventualSchema) {
-  var MAX_PROPERTIES = 30;
-};
-
-var isAboveMinPropertyCount = function (eventualSchema) {
-  var MIN_PROPERTY_QUANTITY = 1;
-};
-
-var hasMaxInstances = function (routeSchema) {
-  var NUMBER_OF_INSTANCES_BEFORE_FREEZE = 500;    
-};
-
-var isBeyondMaxNumberOfDates = function (routeSchema) {
-  var NUMBER_OF_DAYS_BEFORE_FREEZE = 7;
-};
-
 describe("EventualSchema", function () {
-
-  // These will get moved elsewhere, and tested elsewhere at some point.
-  // @todo: Test simpler rules, and then test these rules elsewhere.
-  // @todo: However be careful to let the rule execution interface pass in data that allows these.
-  var rules = [hasMaximumProperties, hasMaxInstances, isAboveMinPropertyCount, isBeyondMaxNumberOfDates];
 
   describe('#constructor', function () {
 
@@ -205,52 +107,245 @@ describe("EventualSchema", function () {
   });
 
   describe('#add', function () {
- 
-    it('should set to the first instance with a propertyCount of one', function () {
+    var eventualSchema;
+    beforeEach(function () {
+      var oneRuleToFreeze = function checkCount() { return this._instanceCount >= 5; }
+      eventualSchema = new EventualSchema([oneRuleToFreeze]);
+    });
 
+    it('should throw an exception if the property frozen is set to true', function () {
+      eventualSchema.frozen = true;
+      (function () {
+        eventualSchema.add({});
+      }).should.throw(Error, "Once frozen EventualSchema#get() is the only callable method.");
+    });
+
+    it('should set to the first instance with a propertyCount of one', function () {
+      var instance = {
+        a: {
+          b: 'word',
+          c: 11
+        }
+      };
+
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema._eventualSchema.should.eql({
+        a: {
+          _propertyCount: 1,
+          b: {
+            _propertyCount: 1
+          },
+          c: {
+            _propertyCount: 1
+          }
+        }
+      });
     });
 
     it('should collate the instances and increase the properties count', function () {
+      var instance = {
+        a: {
+          b: 'word',
+          c: 11
+        }
+      };
+      var otherInstance = {
+        a: {
+          notB: {
+            type: 'giraffe'
+          },
+          c: 5
+        }
+      };
 
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema.add(otherInstance);
+      eventualSchema._eventualSchema.should.eql({
+        a: {
+          _propertyCount: 2,
+          b: {
+            _propertyCount: 1
+          },          
+          notB: {
+            _propertyCount: 1,
+            type: {
+              _propertyCount: 1
+            }
+          },
+          c: {
+            _propertyCount: 2
+          }
+        }
+      });
+    });
+
+    it('should increase property counts correctly when they belong to objects within arrays', function () {
+      var instance = {
+        a: {
+          arrOfObjs: [
+            { name: 'seb', type: 'engineer' },
+            { name: 'seth', type: 'writer' },
+            { name: 'bry', type: 'psychiatrist' }
+          ],
+          c: 11
+        },
+        array: [1, 2, 3],
+        deep: {
+          arr: [ { deeper: 5, deepest: [ { key: 'is here' } ] }, { deeper: 5 } ]
+        }
+      };
+      var otherInstance = {
+        a: {
+          c: 5
+        }
+      };
+
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema.add(otherInstance);
+
+      eventualSchema._eventualSchema.should.eql({
+        a: {
+          _propertyCount: 2,
+          arrOfObjs: {
+            _propertyCount: 1,
+            _arrayObjects: { name: { _propertyCount: 1 }, type: { _propertyCount: 1} }
+          },
+          c: {
+            _propertyCount: 2
+          }
+        },
+        array: { _propertyCount: 1 },
+        deep: {
+          _propertyCount: 1,
+          arr: {
+            _propertyCount: 1,
+            _arrayObjects: {
+              deeper: { _propertyCount: 1 },
+              deepest: {
+                _propertyCount: 1,
+                _arrayObjects: {
+                  key: { _propertyCount: 1 }
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+
+    it('array of objects, adding on properties to each other multiple times', function () {
+      var instance = {
+        arr: [
+          { name: 'Thing', type: 'word', category: { name: 'Abstractions', type: 'general', tags: [ { name: 'these confuse people' }] } },
+          { name: 'Thingamajig', type: 'word', tag: ['legit'], category: { name: 'Abstractions' } }
+        ]
+      };
+      var otherInstance = {
+        arr: [
+          { name: 'Thing', type: 'word' },
+          { name: 'Giraffe', type: 'long-necked animal', category: { name: 'Animals' }}
+        ]
+      };
+
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema.add(otherInstance);
+
+      eventualSchema._eventualSchema.should.eql({
+        arr: {
+          _arrayObjects: {
+            name: { _propertyCount: 2 },
+            type: { _propertyCount: 2 },
+            category: {
+              name: { _propertyCount: 2 },
+              type: { _propertyCount: 1 },
+              tags: {
+                _arrayObjects: {
+                  name: { _propertyCount: 1 }
+                },
+                _propertyCount: 1
+              },
+              _propertyCount: 2
+            },
+            tag: { _propertyCount: 1 }
+          },
+          _propertyCount: 2
+        }
+      });
     });
 
     it('should increase the instance count by one on adding an instance', function () {
+      var instance = {
+        a: {
+          b: 'word',
+          c: 11
+        }
+      };
 
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema._instanceCount.should.equal(1);
     });
 
     it('should not freeze the EventualSchema by default', function () {
+      var freezeSpy = sinon.spy();
+      eventualSchema.freeze = freezeSpy;
+      
+      var instance = {
+        a: {
+          b: 'word',
+          c: 11
+        }
+      };
 
+      eventualSchema.add(instance);
+
+      freezeSpy.called.should.be.false;
     });
 
     it('should freeze the EventualSchema if _isReadyToFreeze responds with true', function () {
+      var freezeSpy = sinon.spy();
+      eventualSchema._freeze = freezeSpy;
+      
+      var instance = {
+        a: {
+          b: 'word',
+          c: 11
+        }
+      };
 
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+
+      freezeSpy.called.should.be.true;
     });
 
   });
-
-  /*
-  todo: move to the route thing in keenio.
-  describe('#_flattenProperties', function () {
-
-    it('should flatten properties given a nested object', function () {
-
-    });
-
-    it('should flatten properties including arrays with a special notation given a nested object', function () {
-
-    });
-
-  });
-  */
 
   describe('#_isReadyToFreeze', function () {
+    var eventualSchema;
+    beforeEach(function () {
+      var checkContext = function (ctx) { return !!ctx.key; },
+          checkDate = function () { return new Date() > this._instantiatedDate; },
+          checkCount = function () { return this._instanceCount >= 10; };
+      eventualSchema = new EventualSchema([checkContext, checkDate, checkCount]);
+    });
 
     it('should be able to execute the list of rules against the correct contexts to return false', function () {
-
+      eventualSchema._isReadyToFreeze().should.be.false;
     });
 
     it('should be able to execute the list of rules against the correct contexts to return true', function () {
-
+      var today = new Date();
+      eventualSchema._instanceCount = 10;
+      eventualSchema._instantiatedDate = new Date(today.setDate(today.getDate() - 7));
+      eventualSchema._isReadyToFreeze({ key: true }).should.be.true;
     });
 
   });
@@ -285,9 +380,17 @@ describe("EventualSchema", function () {
   });
 
   describe("#_generateEventualSchema", function () {
+    var eventualSchema;
+    beforeEach(function () {
+      eventualSchema = new EventualSchema();
+    });
 
     it('should generate a valid _eventualSchema from _collatedInstances', function () {
-
+      var collatedInstances = {
+        a: { _propertyCount: 3 },
+        b: { _propertyCount: 5 }
+      };
+      eventualSchema._generateEventualSchema(collatedInstances).should.eql(collatedInstances);
     });
 
   });
