@@ -1,6 +1,7 @@
 "use strict";
 
-var should = require('chai').should();
+var should = require('chai').should(),
+    sinon = require('sinon');
 
 var EventualSchema = require('../');
 
@@ -98,6 +99,7 @@ var isBeyondMaxNumberOfDates = function (routeSchema) {
 };
 
 describe("EventualSchema", function () {
+
   // These will get moved elsewhere, and tested elsewhere at some point.
   // @todo: Test simpler rules, and then test these rules elsewhere.
   // @todo: However be careful to let the rule execution interface pass in data that allows these.
@@ -106,51 +108,98 @@ describe("EventualSchema", function () {
   describe('#constructor', function () {
 
     it('should set its defaults correctly', function () {
-
+      var eventualSchema = new EventualSchema();
+      eventualSchema._instantiatedDate.should.be.instanceof(Date);
+      eventualSchema._instanceCount.should.be.equal(0);
+      eventualSchema._collatedInstances.should.be.eql({});
+      eventualSchema._rules.should.be.eql([]);
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.frozen.should.be.false;
     });
 
     it('should take a list of rules', function () {
-
+      var someRule = function () {},
+          rules = [someRule];
+      var eventualSchema = new EventualSchema(rules);
+      eventualSchema._rules.should.be.eql(rules);
     });
 
     it('should not accept a rules object which does not resemble a list of functions', function () {
-
+      var someRule = 'not-a-rule',
+          rules = [someRule];
+      (function () {
+        var eventualSchema = new EventualSchema(rules);
+      }).should.throw(Error, "EventualSchema's rules argument should only be passed a list of functions.");
     });
 
   });
 
   describe('#initEventualSchema', function () {
+    var eventualSchema;
+    beforeEach(function () {
+      eventualSchema = new EventualSchema();
+    });
     
     it('should set frozen to false and an empty object against _eventualSchema by default', function () {
-
+      eventualSchema.initEventualSchema();
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.frozen.should.be.false;
     });
 
     it('should be able to set frozen to true and set _eventualSchema if that is the case', function () {
-
+      var schema = {
+        a: { _propertyCount: 5 }
+      };
+      eventualSchema.initEventualSchema(schema, true);
+      eventualSchema._eventualSchema.should.be.eql(schema);
+      eventualSchema.frozen.should.be.true;
     });
 
   });
 
   describe('#_checkIfFrozen', function () {
+    var eventualSchema;
+    beforeEach(function () {
+      eventualSchema = new EventualSchema();
+    });
 
     it('should throw an exception if the property frozen is set to true', function () {
-
+      eventualSchema.frozen = true;
+      (function () {
+        eventualSchema._checkIfFrozen();
+      }).should.throw(Error, "Once frozen EventualSchema#get() is the only callable method.");
     });
 
     it('should not throw an exception if the property frozen is set to false', function () {
-
+      eventualSchema.frozen = false;
+      (function () {
+        eventualSchema._checkIfFrozen();
+      }).should.not.throw(Error, "Once frozen EventualSchema#get() is the only callable method.");
     });
 
   });
 
-  describe('#get' function () {
+  describe('#get', function () {
+    var eventualSchema;
+    beforeEach(function () {
+      eventualSchema = new EventualSchema();
+    });
     
     it('should throw an exception if the property frozen is set to false', function () {
-
+      eventualSchema.frozen = false;
+      (function () {
+        eventualSchema.get();
+      }).should.throw(Error, "You cannot get the _eventualSchema until the necessary rules have been passed.");
     });
 
     it('should return a valid eventualSchema if frozen is set to true', function () {
-
+      eventualSchema.frozen = true;
+      eventualSchema._eventualSchema = { a: 5 };
+      var es;
+      (function () {
+        es = eventualSchema.get();
+      }).should.not.throw(Error, "You cannot get the _eventualSchema until the necessary rules have been passed.");
+      es.should.eql({ a: 5 });
     });
 
   });
@@ -179,6 +228,8 @@ describe("EventualSchema", function () {
 
   });
 
+  /*
+  todo: move to the route thing in keenio.
   describe('#_flattenProperties', function () {
 
     it('should flatten properties given a nested object', function () {
@@ -190,6 +241,7 @@ describe("EventualSchema", function () {
     });
 
   });
+  */
 
   describe('#_isReadyToFreeze', function () {
 
@@ -204,17 +256,30 @@ describe("EventualSchema", function () {
   });
 
   describe('#freeze', function () {
+    var eventualSchema;
+    beforeEach(function () {
+      eventualSchema = new EventualSchema();
+    });
     
     it('should throw an exception if the property frozen is set to true', function () {
-
+      eventualSchema.frozen = true;
+      (function () {
+        eventualSchema.freeze();
+      }).should.throw(Error, "Once frozen EventualSchema#get() is the only callable method.");
     });
 
     it('should generate a _eventualSchema on execution', function () {
+      var generateSpy = sinon.spy();
+      eventualSchema._generateEventualSchema = generateSpy;
+      eventualSchema.freeze();
 
+      generateSpy.called.should.be.true;
     });
 
     it('should set frozen to true on execution', function () {
-
+      eventualSchema.frozen.should.be.false;
+      eventualSchema.freeze();
+      eventualSchema.frozen.should.be.true;
     });
 
   });
