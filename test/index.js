@@ -342,7 +342,7 @@ describe("EventualSchema", function () {
           d: {
             e: 14,
             f: {
-              g: [ { name: 'hey' }, { name: 'hey' } ]
+              g: [ { name: 'hey', code: 'hi' }, { code: 'hi', name: 'hey' }, { code: 'hi', name: 'hey' } ]
             }
           }
         }
@@ -350,7 +350,7 @@ describe("EventualSchema", function () {
 
       eventualSchema.add(instance);
       eventualSchema.add(instance);
-      eventualSchema._propertyCount.should.equal(7);
+      eventualSchema._propertyCount.should.equal(17);
     });
 
     it('should not freeze the EventualSchema by default', function () {

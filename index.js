@@ -176,7 +176,6 @@ EventualSchema.prototype._addInstance = function (eventualSchema, instance, incr
     });
 
     // @todo: BUG: the array of objects code is causing the property to be counted wrongly in two places.
-    self._propertyCount -= 1;
     return eventualSchema;
   }
 
