@@ -3,6 +3,8 @@
 var utils = require('./lib/utils'),
     extend = utils.extend,
     forEach = utils.forEach,
+    isArray = utils.isArray,
+    isObject = utils.isObject,
     isEnumerable = utils.isEnumerable,
     isArrayOfObjects = utils.isArrayOfObjects,
     isArrayOfFunctions = utils.isArrayOfFunctions,
@@ -129,25 +131,24 @@ EventualSchema.prototype._checkIfFrozen = function () {
   }
 };
 
-EventualSchema.prototype._addInstance = function (eventualSchema, instance) {
-  var self = this;
-
-  eventualSchema = eventualSchema || {};
-
-  if (!isEnumerable(instance)) {
-    return eventualSchema;
-  }
-
-  forEach(instance, function (instanceValue, instanceKey) {
-    var currentEventualSchemaLevel = eventualSchema[instanceKey];
+    /*
     if (isArrayOfObjects(instanceValue)) {
-      var _insideArrayObjects = self._addInstance(currentEventualSchemaLevel, instanceValue);
+      var arrayObjectSchema = currentEventualSchemaLevel && currentEventualSchemaLevel._arrayObjects;
+      var arrayObjectSchemas = {};
+      var instanceValues = instanceValue;
+      forEach(instanceValues, function (_, key) {
+        arrayObjectSchemas[key] = extend({}, arrayObjectSchema);
+      });
+
+      // @todo: We need a serious refactor to find this bug!
+      // It might make it easier to separate into different functions.
+      var _insideArrayObjects = self._addInstance(arrayObjectSchemas, instanceValues);
       
       var objs = [{}];
       forEach(_insideArrayObjects, function (v) {
         objs.push(v);
       });
-      var _arrayObjects = extend.apply(extend, objs);
+      var _arrayObjects = extend.apply(this, objs);
       delete _arrayObjects._propertyCount;
 
       currentEventualSchemaLevel = {};
@@ -159,11 +160,57 @@ EventualSchema.prototype._addInstance = function (eventualSchema, instance) {
       // Normal values and enumerables may be treated in the same way...
       currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue);
     }
-    currentEventualSchemaLevel._propertyCount = currentEventualSchemaLevel._propertyCount + 1 || 1;
+    */
 
-    eventualSchema[instanceKey] = currentEventualSchemaLevel;
-  });
+EventualSchema.prototype._addInstance = function (eventualSchema, instance, increaseCount) {
+  var self = this;
 
+  increaseCount = increaseCount === undefined ? true : increaseCount;
+
+  // If we are operating upon just a value, then we just return this.
+  if (!isEnumerable(instance)) {
+    eventualSchema = eventualSchema || {};
+
+    return eventualSchema;
+  }
+
+  if (isArrayOfObjects(instance)) {
+    eventualSchema = eventualSchema || {};
+    var propertyCount = eventualSchema._propertyCount ? eventualSchema._propertyCount : 0;
+    forEach(instance, function (instanceValue, instanceKey) {
+      var currentEventualSchemaLevel = {};
+
+      currentEventualSchemaLevel._arrayObjects = self._addInstance(extend({}, eventualSchema._arrayObjects), instanceValue);
+      currentEventualSchemaLevel._propertyCount = propertyCount;
+
+      eventualSchema = currentEventualSchemaLevel;
+    });
+
+    return eventualSchema;
+  }
+
+  if (isArrayOfNonEnumerables(instance)) {
+    eventualSchema = eventualSchema || {};
+    return eventualSchema;
+  }
+
+  // If what we are operating upon is an object or an array then we execute this.
+  if (isObject(instance)) {
+    eventualSchema = eventualSchema || {};
+    forEach(instance, function (instanceValue, instanceKey) {
+      var currentEventualSchemaLevel = eventualSchema[instanceKey] || {};
+
+      currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, increaseCount);
+      currentEventualSchemaLevel._propertyCount = (increaseCount && currentEventualSchemaLevel._propertyCount) ? currentEventualSchemaLevel._propertyCount + 1 : 1;
+
+      eventualSchema[instanceKey] = currentEventualSchemaLevel;
+    });
+
+    return eventualSchema;
+  }
+  
+  // console.log(JSON.stringify(eventualSchema, true, 2));
+  // The only point we reach this line is if we've finished recursing and are on the first level of the instance.
   return eventualSchema;
 };
 

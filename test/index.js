@@ -181,6 +181,50 @@ describe("EventualSchema", function () {
       });
     });
 
+    it("should accept an array of non-enumerables and do its thing", function () {
+      var instance = {
+        arr: [ 1, 2, 3 ]
+      };
+      var otherInstance = {
+        arr: [ 4, 5, 6 ]
+      };
+
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema.add(otherInstance);
+
+      eventualSchema._eventualSchema.should.eql({
+        arr: {
+          _propertyCount: 2
+        }
+      });
+    });
+
+    it("should accept an array of objects and property count correctly", function () {
+      var instance = {
+        arr: [ { name: 'wtf' }, { name: 'wtf' } ]
+      };
+      var otherInstance = {
+        arr: [ { name: 'wtf' }, { name: 'wtf' }, { name: 'wtf' } ]
+      };
+
+      should.not.exist(eventualSchema._eventualSchema);
+      eventualSchema.add(instance);
+      eventualSchema.add(otherInstance);
+
+      // The behaviour might not be expected, but it is that the property name increases with the rate it appears in arrays
+      // and not just the rate in which it appears in a per-instance array.
+      // This may change in future - I hadn't meant for this to be the case originally.
+      eventualSchema._eventualSchema.should.eql({
+        arr: {
+          _arrayObjects: {
+            name: { _propertyCount: 5 }
+          },
+          _propertyCount: 2
+        }
+      });
+    });
+
     it('should increase property counts correctly when they belong to objects within arrays', function () {
       var instance = {
         a: {
@@ -211,7 +255,7 @@ describe("EventualSchema", function () {
           _propertyCount: 2,
           arrOfObjs: {
             _propertyCount: 1,
-            _arrayObjects: { name: { _propertyCount: 1 }, type: { _propertyCount: 1} }
+            _arrayObjects: { name: { _propertyCount: 3 }, type: { _propertyCount: 3 } }
           },
           c: {
             _propertyCount: 2
@@ -223,7 +267,7 @@ describe("EventualSchema", function () {
           arr: {
             _propertyCount: 1,
             _arrayObjects: {
-              deeper: { _propertyCount: 1 },
+              deeper: { _propertyCount: 2 },
               deepest: {
                 _propertyCount: 1,
                 _arrayObjects: {
@@ -257,10 +301,10 @@ describe("EventualSchema", function () {
       eventualSchema._eventualSchema.should.eql({
         arr: {
           _arrayObjects: {
-            name: { _propertyCount: 2 },
-            type: { _propertyCount: 2 },
+            name: { _propertyCount: 4 },
+            type: { _propertyCount: 4 },
             category: {
-              name: { _propertyCount: 2 },
+              name: { _propertyCount: 3 },
               type: { _propertyCount: 1 },
               tags: {
                 _arrayObjects: {
@@ -268,7 +312,7 @@ describe("EventualSchema", function () {
                 },
                 _propertyCount: 1
               },
-              _propertyCount: 2
+              _propertyCount: 3
             },
             tag: { _propertyCount: 1 }
           },
