@@ -131,45 +131,29 @@ EventualSchema.prototype._checkIfFrozen = function () {
   }
 };
 
-    /*
-    if (isArrayOfObjects(instanceValue)) {
-      var arrayObjectSchema = currentEventualSchemaLevel && currentEventualSchemaLevel._arrayObjects;
-      var arrayObjectSchemas = {};
-      var instanceValues = instanceValue;
-      forEach(instanceValues, function (_, key) {
-        arrayObjectSchemas[key] = extend({}, arrayObjectSchema);
-      });
-
-      // @todo: We need a serious refactor to find this bug!
-      // It might make it easier to separate into different functions.
-      var _insideArrayObjects = self._addInstance(arrayObjectSchemas, instanceValues);
-      
-      var objs = [{}];
-      forEach(_insideArrayObjects, function (v) {
-        objs.push(v);
-      });
-      var _arrayObjects = extend.apply(this, objs);
-      delete _arrayObjects._propertyCount;
-
-      currentEventualSchemaLevel = {};
-      currentEventualSchemaLevel._arrayObjects = _arrayObjects;
-    } else if (isArrayOfNonEnumerables(instanceValue)) {
-      // e.g. [1, 2, 4] or ['word', 'hey', 'this was a bit of work']
-      currentEventualSchemaLevel = {};
-    } else {
-      // Normal values and enumerables may be treated in the same way...
-      currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue);
-    }
-    */
-
 EventualSchema.prototype._addInstance = function (eventualSchema, instance, increaseCount) {
   var self = this;
 
   increaseCount = increaseCount === undefined ? true : increaseCount;
 
   // If we are operating upon just a value, then we just return this.
-  if (!isEnumerable(instance)) {
+  if (!isEnumerable(instance) || isArrayOfNonEnumerables(instance)) {
     eventualSchema = eventualSchema || {};
+
+    return eventualSchema;
+  }
+
+  // If what we are operating upon is an object or an array then we execute this.
+  if (isObject(instance)) {
+    eventualSchema = eventualSchema || {};
+    forEach(instance, function (instanceValue, instanceKey) {
+      var currentEventualSchemaLevel = eventualSchema[instanceKey] || {};
+
+      currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, increaseCount);
+      currentEventualSchemaLevel._propertyCount = (increaseCount && currentEventualSchemaLevel._propertyCount) ? currentEventualSchemaLevel._propertyCount + 1 : 1;
+
+      eventualSchema[instanceKey] = currentEventualSchemaLevel;
+    });
 
     return eventualSchema;
   }
@@ -189,27 +173,6 @@ EventualSchema.prototype._addInstance = function (eventualSchema, instance, incr
     return eventualSchema;
   }
 
-  if (isArrayOfNonEnumerables(instance)) {
-    eventualSchema = eventualSchema || {};
-    return eventualSchema;
-  }
-
-  // If what we are operating upon is an object or an array then we execute this.
-  if (isObject(instance)) {
-    eventualSchema = eventualSchema || {};
-    forEach(instance, function (instanceValue, instanceKey) {
-      var currentEventualSchemaLevel = eventualSchema[instanceKey] || {};
-
-      currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, increaseCount);
-      currentEventualSchemaLevel._propertyCount = (increaseCount && currentEventualSchemaLevel._propertyCount) ? currentEventualSchemaLevel._propertyCount + 1 : 1;
-
-      eventualSchema[instanceKey] = currentEventualSchemaLevel;
-    });
-
-    return eventualSchema;
-  }
-  
-  // console.log(JSON.stringify(eventualSchema, true, 2));
   // The only point we reach this line is if we've finished recursing and are on the first level of the instance.
   return eventualSchema;
 };
