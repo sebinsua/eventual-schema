@@ -334,6 +334,25 @@ describe("EventualSchema", function () {
       eventualSchema._instanceCount.should.equal(1);
     });
 
+    it('should correctly increase the property count of the eventual schema by a number of properties', function () {
+      var instance = {
+        a: {
+          b: 'word',
+          c: 11,
+          d: {
+            e: 14,
+            f: {
+              g: [ { name: 'hey' }, { name: 'hey' } ]
+            }
+          }
+        }
+      };
+
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+      eventualSchema._propertyCount.should.equal(7);
+    });
+
     it('should not freeze the EventualSchema by default', function () {
       var freezeSpy = sinon.spy();
       eventualSchema.freeze = freezeSpy;

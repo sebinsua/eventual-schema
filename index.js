@@ -14,6 +14,7 @@ var utils = require('./lib/utils'),
 var EventualSchema = function (rules) {
   this._instantiatedDate = new Date();
   this._instanceCount = 0;
+  this._propertyCount = 0;
 
   this._collatedInstances = {};
 
@@ -152,6 +153,11 @@ EventualSchema.prototype._addInstance = function (eventualSchema, instance, incr
       currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, increaseCount);
       currentEventualSchemaLevel._propertyCount = (increaseCount && currentEventualSchemaLevel._propertyCount) ? currentEventualSchemaLevel._propertyCount + 1 : 1;
 
+      if (instanceKey in eventualSchema) {
+        // We update the property count of the whole eventual schema.
+        // @todo: BUG: Currently we're not calculating this properly.
+        self._propertyCount += 1;
+      }
       eventualSchema[instanceKey] = currentEventualSchemaLevel;
     });
 
@@ -160,16 +166,17 @@ EventualSchema.prototype._addInstance = function (eventualSchema, instance, incr
 
   if (isArrayOfObjects(instance)) {
     eventualSchema = eventualSchema || {};
-    var propertyCount = eventualSchema._propertyCount ? eventualSchema._propertyCount : 0;
     forEach(instance, function (instanceValue, instanceKey) {
       var currentEventualSchemaLevel = {};
 
       currentEventualSchemaLevel._arrayObjects = self._addInstance(extend({}, eventualSchema._arrayObjects), instanceValue);
-      currentEventualSchemaLevel._propertyCount = propertyCount;
+      currentEventualSchemaLevel._propertyCount = eventualSchema._propertyCount ? eventualSchema._propertyCount : 0; // @todo: the reason for it being set to 0 here is that it wil be increased immediately afterwards.
 
       eventualSchema = currentEventualSchemaLevel;
     });
 
+    // @todo: BUG: the array of objects code is causing the property to be counted wrongly in two places.
+    self._propertyCount -= 1;
     return eventualSchema;
   }
 
