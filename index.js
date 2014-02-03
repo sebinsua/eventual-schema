@@ -188,9 +188,10 @@ EventualSchema.prototype._isReadyToFreeze = function (ctx) {
 
   ctx = ctx || {};
   
-  var isReadyToFreeze = this._rules.reduce(function (acc, fn) {
-    return acc && fn.call(self, ctx);
-  }, true) || false;
+  // If *any* of these rules is true, then it shall freeze is true, otherwise it will be false.
+  var isReadyToFreeze =  this._rules.length > 0 ? this._rules.reduce(function (acc, fn) {
+    return acc || fn.call(self, ctx);
+  }, false) : false;
 
   return isReadyToFreeze;
 };
