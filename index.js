@@ -16,7 +16,7 @@ var EventualSchema = function (rules) {
   this._instanceCount = 0;
   this._propertyCount = 0;
 
-  this._collatedInstances = {};
+  this._collatedInstances = null;
 
   this._rules = (rules && this._checkRules(rules)) || [];
 
@@ -108,7 +108,7 @@ EventualSchema.prototype.get = function () {
 EventualSchema.prototype.add = function (instance) {
   this._checkIfFrozen();
 
-  this._eventualSchema = this._addInstance(this._eventualSchema, instance);
+  this._collatedInstances = this._addInstance(this._collatedInstances, instance);
   this._instanceCount += 1;
 
   if (this._isReadyToFreeze()) {

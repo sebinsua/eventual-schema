@@ -13,7 +13,7 @@ describe("EventualSchema", function () {
       var eventualSchema = new EventualSchema();
       eventualSchema._instantiatedDate.should.be.instanceof(Date);
       eventualSchema._instanceCount.should.be.equal(0);
-      eventualSchema._collatedInstances.should.be.eql({});
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema._rules.should.be.eql([]);
       should.not.exist(eventualSchema._eventualSchema);
       eventualSchema.frozen.should.be.false;
@@ -128,9 +128,9 @@ describe("EventualSchema", function () {
         }
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
-      eventualSchema._eventualSchema.should.eql({
+      eventualSchema._collatedInstances.should.eql({
         a: {
           _propertyCount: 1,
           b: {
@@ -159,10 +159,10 @@ describe("EventualSchema", function () {
         }
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
       eventualSchema.add(otherInstance);
-      eventualSchema._eventualSchema.should.eql({
+      eventualSchema._collatedInstances.should.eql({
         a: {
           _propertyCount: 2,
           b: {
@@ -189,11 +189,11 @@ describe("EventualSchema", function () {
         arr: [ 4, 5, 6 ]
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
       eventualSchema.add(otherInstance);
 
-      eventualSchema._eventualSchema.should.eql({
+      eventualSchema._collatedInstances.should.eql({
         arr: {
           _propertyCount: 2
         }
@@ -208,14 +208,14 @@ describe("EventualSchema", function () {
         arr: [ { name: 'wtf' }, { name: 'wtf' }, { name: 'wtf' } ]
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
       eventualSchema.add(otherInstance);
 
       // The behaviour might not be expected, but it is that the property name increases with the rate it appears in arrays
       // and not just the rate in which it appears in a per-instance array.
       // This may change in future - I hadn't meant for this to be the case originally.
-      eventualSchema._eventualSchema.should.eql({
+      eventualSchema._collatedInstances.should.eql({
         arr: {
           _arrayObjects: {
             name: { _propertyCount: 5 }
@@ -246,11 +246,11 @@ describe("EventualSchema", function () {
         }
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
       eventualSchema.add(otherInstance);
 
-      eventualSchema._eventualSchema.should.eql({
+      eventualSchema._collatedInstances.should.eql({
         a: {
           _propertyCount: 2,
           arrOfObjs: {
@@ -294,11 +294,11 @@ describe("EventualSchema", function () {
         ]
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
       eventualSchema.add(otherInstance);
 
-      eventualSchema._eventualSchema.should.eql({
+      eventualSchema._collatedInstances.should.eql({
         arr: {
           _arrayObjects: {
             name: { _propertyCount: 4 },
@@ -329,7 +329,7 @@ describe("EventualSchema", function () {
         }
       };
 
-      should.not.exist(eventualSchema._eventualSchema);
+      should.not.exist(eventualSchema._collatedInstances);
       eventualSchema.add(instance);
       eventualSchema._instanceCount.should.equal(1);
     });
