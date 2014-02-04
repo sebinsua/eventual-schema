@@ -108,6 +108,7 @@ EventualSchema.prototype.get = function () {
 EventualSchema.prototype.add = function (instance) {
   this._checkIfFrozen();
 
+  this._propertyCount = 0;
   this._collatedInstances = this._addInstance(this._collatedInstances, instance);
   this._instanceCount += 1;
 

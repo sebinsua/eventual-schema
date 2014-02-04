@@ -350,7 +350,10 @@ describe("EventualSchema", function () {
 
       eventualSchema.add(instance);
       eventualSchema.add(instance);
-      eventualSchema._propertyCount.should.equal(17);
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+      eventualSchema.add(instance);
+      eventualSchema._propertyCount.should.equal(13);
     });
 
     it('should not freeze the EventualSchema by default', function () {
