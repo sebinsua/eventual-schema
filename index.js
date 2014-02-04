@@ -150,10 +150,13 @@ EventualSchema.prototype._addInstance = function (collatedInstances, instance, i
     forEach(instance, function (instanceValue, instanceKey) {
       var currentEventualSchemaLevel = collatedInstances[instanceKey] || {};
 
-      currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, increaseCount);
+      var keyAddedForFirstTime = !(instanceKey in collatedInstances);
+      increaseCount = !keyAddedForFirstTime;
+
+      currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, true);
       currentEventualSchemaLevel._propertyCount = (increaseCount && currentEventualSchemaLevel._propertyCount) ? currentEventualSchemaLevel._propertyCount + 1 : 1;
 
-      if (!(instanceKey in collatedInstances)) {
+      if (keyAddedForFirstTime) {
         self._propertyCount += 1;
       }
 
@@ -168,7 +171,7 @@ EventualSchema.prototype._addInstance = function (collatedInstances, instance, i
     forEach(instance, function (instanceValue, instanceKey) {
       var currentEventualSchemaLevel = {};
 
-      currentEventualSchemaLevel._arrayObjects = self._addInstance(extend({}, collatedInstances._arrayObjects), instanceValue);
+      currentEventualSchemaLevel._arrayObjects = self._addInstance(extend({}, collatedInstances._arrayObjects), instanceValue, false);
       currentEventualSchemaLevel._propertyCount = collatedInstances._propertyCount ? collatedInstances._propertyCount : 0; // @todo: the reason for it being set to 0 here is that it wil be increased immediately afterwards.
 
       collatedInstances = currentEventualSchemaLevel;

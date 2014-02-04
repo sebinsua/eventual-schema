@@ -205,7 +205,7 @@ describe("EventualSchema", function () {
         arr: [ { name: 'wtf' }, { name: 'wtf' } ]
       };
       var otherInstance = {
-        arr: [ { name: 'wtf' }, { name: 'wtf' }, { name: 'wtf' } ]
+        arr: [ { name: 'wtf' }, { name: 'wtf' }, { name: 'wtf', code: 'word' } ]
       };
 
       should.not.exist(eventualSchema._collatedInstances);
@@ -218,7 +218,8 @@ describe("EventualSchema", function () {
       eventualSchema._collatedInstances.should.eql({
         arr: {
           _arrayObjects: {
-            name: { _propertyCount: 5 }
+            name: { _propertyCount: 5 },
+            code: { _propertyCount: 1 }
           },
           _propertyCount: 2
         }
