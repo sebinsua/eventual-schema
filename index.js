@@ -108,7 +108,6 @@ EventualSchema.prototype.get = function () {
 EventualSchema.prototype.add = function (instance) {
   this._checkIfFrozen();
 
-  this._propertyCount = 0;
   this._collatedInstances = this._addInstance(this._collatedInstances, instance);
   this._instanceCount += 1;
 
@@ -133,55 +132,54 @@ EventualSchema.prototype._checkIfFrozen = function () {
   }
 };
 
-EventualSchema.prototype._addInstance = function (eventualSchema, instance, increaseCount) {
+EventualSchema.prototype._addInstance = function (collatedInstances, instance, increaseCount) {
   var self = this;
 
   increaseCount = increaseCount === undefined ? true : increaseCount;
 
   // If we are operating upon just a value, then we just return this.
   if (!isEnumerable(instance) || isArrayOfNonEnumerables(instance)) {
-    eventualSchema = eventualSchema || {};
+    collatedInstances = collatedInstances || {};
 
-    return eventualSchema;
+    return collatedInstances;
   }
 
   // If what we are operating upon is an object or an array then we execute this.
   if (isObject(instance)) {
-    eventualSchema = eventualSchema || {};
+    collatedInstances = collatedInstances || {};
     forEach(instance, function (instanceValue, instanceKey) {
-      var currentEventualSchemaLevel = eventualSchema[instanceKey] || {};
+      var currentEventualSchemaLevel = collatedInstances[instanceKey] || {};
 
       currentEventualSchemaLevel = self._addInstance(currentEventualSchemaLevel, instanceValue, increaseCount);
       currentEventualSchemaLevel._propertyCount = (increaseCount && currentEventualSchemaLevel._propertyCount) ? currentEventualSchemaLevel._propertyCount + 1 : 1;
 
-      if (instanceKey in eventualSchema) {
-        // We update the property count of the whole eventual schema.
-        // @todo: BUG: Currently we're not calculating this properly.
+      if (!(instanceKey in collatedInstances)) {
         self._propertyCount += 1;
       }
-      eventualSchema[instanceKey] = currentEventualSchemaLevel;
+
+      collatedInstances[instanceKey] = currentEventualSchemaLevel;
     });
 
-    return eventualSchema;
+    return collatedInstances;
   }
 
   if (isArrayOfObjects(instance)) {
-    eventualSchema = eventualSchema || {};
+    collatedInstances = collatedInstances || {};
     forEach(instance, function (instanceValue, instanceKey) {
       var currentEventualSchemaLevel = {};
 
-      currentEventualSchemaLevel._arrayObjects = self._addInstance(extend({}, eventualSchema._arrayObjects), instanceValue);
-      currentEventualSchemaLevel._propertyCount = eventualSchema._propertyCount ? eventualSchema._propertyCount : 0; // @todo: the reason for it being set to 0 here is that it wil be increased immediately afterwards.
+      currentEventualSchemaLevel._arrayObjects = self._addInstance(extend({}, collatedInstances._arrayObjects), instanceValue);
+      currentEventualSchemaLevel._propertyCount = collatedInstances._propertyCount ? collatedInstances._propertyCount : 0; // @todo: the reason for it being set to 0 here is that it wil be increased immediately afterwards.
 
-      eventualSchema = currentEventualSchemaLevel;
+      collatedInstances = currentEventualSchemaLevel;
     });
 
     // @todo: BUG: the array of objects code is causing the property to be counted wrongly in two places.
-    return eventualSchema;
+    return collatedInstances;
   }
 
   // The only point we reach this line is if we've finished recursing and are on the first level of the instance.
-  return eventualSchema;
+  return collatedInstances;
 };
 
 EventualSchema.prototype._isReadyToFreeze = function (ctx) {

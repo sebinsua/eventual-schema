@@ -342,18 +342,24 @@ describe("EventualSchema", function () {
           d: {
             e: 14,
             f: {
-              g: [ { name: 'hey', code: 'hi' }, { code: 'hi', name: 'hey' }, { code: 'hi', name: 'hey' } ]
+              g: [ { name: 'hey', code: 'hi' }, { code: 'hi', name: 'hey', type: 'mystery' }, { code: 'hi', name: 'hey', type: 'mystery' } ]
             }
           }
         }
       };
+      var otherInstance = {
+        a: {},
+        z: {
+          code: 'hey'
+        }
+      }
 
       eventualSchema.add(instance);
       eventualSchema.add(instance);
       eventualSchema.add(instance);
       eventualSchema.add(instance);
-      eventualSchema.add(instance);
-      eventualSchema._propertyCount.should.equal(13);
+      eventualSchema.add(otherInstance);
+      eventualSchema._propertyCount.should.equal(12);
     });
 
     it('should not freeze the EventualSchema by default', function () {
