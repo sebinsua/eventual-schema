@@ -185,6 +185,8 @@ EventualSchema.prototype._addInstance = function (collatedInstances, instance, i
   return collatedInstances;
 };
 
+// If any of the rules return `true` we are ready to freeze.
+// No rules: no freezing.
 EventualSchema.prototype._isReadyToFreeze = function (ctx) {
   var self = this;
 
