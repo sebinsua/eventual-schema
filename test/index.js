@@ -411,6 +411,10 @@ describe("EventualSchema", function () {
     });
 
     it('should be able to execute the list of rules against the correct contexts to return false', function () {
+      var today = new Date();
+      eventualSchema._instanceCount = 0;
+      eventualSchema._instantiatedDate = new Date(today.setDate(today.getDate() + 7));
+      
       eventualSchema._isReadyToFreeze().should.be.false;
     });
 
