@@ -1,4 +1,4 @@
-eventual-schema
+[eventual-schema](http://sebinsua.github.io/eventual-schema/)
 ===============
 
 [![Build Status](https://travis-ci.org/sebinsua/eventual-schema.png)](https://travis-ci.org/sebinsua/eventual-schema)
